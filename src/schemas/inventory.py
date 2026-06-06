@@ -23,10 +23,6 @@ class ReserveFailedItem(BaseModel):
     available: int
     reason: str
 
-class ReserveFailedResponse(BaseModel):
-    reserved: bool = False
-    failed_items: List[ReserveFailedItem]
-
 class UnreserveItem(BaseModel):
     sku_id: UUID
     quantity: int = Field(..., gt=0)
