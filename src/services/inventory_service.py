@@ -12,13 +12,6 @@ class InventoryService:
         self.db = db
 
     def reserve(self, request: ReserveRequest) -> dict:
-        for item in request.items:
-            if item.quantity <= 0:
-                return {
-                    "code": "INVALID_QUANTITY",
-                    "message": f"Quantity must be positive, got {item.quantity}"
-                }
-
         existing = self.db.query(ReserveOperation).filter(
             ReserveOperation.idempotency_key == str(request.idempotency_key)
         ).first()
@@ -88,13 +81,6 @@ class InventoryService:
             raise e
 
     def unreserve(self, request: UnreserveRequest) -> dict:
-        for item in request.items:
-            if item.quantity <= 0:
-                return {
-                    "code": "INVALID_QUANTITY",
-                    "message": f"Quantity must be positive, got {item.quantity}"
-                }
-
         existing = self.db.query(UnreserveOperation).filter(
             UnreserveOperation.order_id == request.order_id
         ).first()
@@ -149,4 +135,15 @@ class InventoryService:
             raise e
 
     def _emit_out_of_stock_event(self, sku):
-        print(f"EVENT: SKU_OUT_OF_STOCK - sku_id={sku.id}, product_id={sku.product_id}")
+        from src.models.outbox_event import OutboxEvent
+        
+        event = OutboxEvent(
+            event_type="SKU_OUT_OF_STOCK",
+            aggregate_id=str(sku.id),
+            payload={
+                "sku_id": str(sku.id),
+                "product_id": str(sku.product_id),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+        self.db.add(event)

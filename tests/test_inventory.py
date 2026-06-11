@@ -55,6 +55,6 @@ def test_zero_quantity_rejected():
         }
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 422
     data = response.json()
-    assert data["code"] == "INVALID_QUANTITY"
+    assert data["code"] == "VALIDATION_ERROR"
